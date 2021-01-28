@@ -47,157 +47,157 @@ def InceptionV1(
     Returns:
       A `keras.Model` instance.
     """
-    img_input = keras.layers.Input(shape=input_shape)
+    img_input = keras.layers.Input(shape=input_shape, name='input')
 
     if keras.backend.image_data_format() == 'channels_first':
         channel_axis = 1
     else:
         channel_axis = 3
 
-    # stage_1
-    x = keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', name='stage_1_conv1')(img_input)
-    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage_1_pool')(x)
+    # stage1
+    x = keras.layers.Conv2D(filters=64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', name='stage1_conv7x7')(img_input)
+    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage1_pool')(x)
 
-    # stage_2
-    x = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage_2_conv1')(x)
-    x = keras.layers.Conv2D(filters=192, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage_2_conv2')(x)
-    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage_2_pool')(x)
+    # stage2
+    x = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage2_conv3x3_reduce')(x)
+    x = keras.layers.Conv2D(filters=192, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage2_conv3x3')(x)
+    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage2_pool')(x)
 
-    # stage_3_a
-    branch1x1 = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage3a
+    branch1x1 = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3a_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=96, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=96, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3a_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage3a_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=16, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=16, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3a_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage3a_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage3a_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3a_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_3_a')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage3a')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_3_b
-    branch1x1 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage3b
+    branch1x1 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3b_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=192, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3b_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=192, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage3b_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=96, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3b_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=96, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage3b_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage3b_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage3b_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_3_b')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage3b')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_3_pool
-    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage_3_pool')(x)
+    # stage3_pool
+    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage3_pool')(x)
 
-    # stage_4_a
-    branch1x1 = keras.layers.Conv2D(filters=192, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage4a
+    branch1x1 = keras.layers.Conv2D(filters=192, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=96, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=208, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=96, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=208, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage4a_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=16, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=48, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=16, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=48, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage4a_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage4a_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_4_a')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage4a')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_4_b
-    branch1x1 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage4b
+    branch1x1 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=112, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=224, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=112, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=224, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=24, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=24, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage4b_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4b_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_4_b')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage4b')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_4_c
-    branch1x1 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage4c
+    branch1x1 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4c_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4c_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=256, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage4c_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=24, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=24, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4c_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage4c_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage4c_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4c_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_4_c')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage4c')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_4_d
-    branch1x1 = keras.layers.Conv2D(filters=112, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage4d
+    branch1x1 = keras.layers.Conv2D(filters=112, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=144, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=288, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=144, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=288, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage4d_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=64, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage4d_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage4d_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_4_d')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage4d')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_4_e
-    branch1x1 = keras.layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage4e
+    branch1x1 = keras.layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=320, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=320, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage4e_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4e_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_4_e')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage4e')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_4_pool
-    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage_4_pool')(x)
+    # stage4_pool
+    x = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same', name='stage4_pool')(x)
 
-    # stage_5_a
-    branch1x1 = keras.layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage5a
+    branch1x1 = keras.layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5a_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=320, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5a_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=320, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage5a_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=32, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5a_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage5a_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage5a_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5a_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_5_a')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage5a')([branch1x1, branch3x3, branch5x5, branch_pool])
 
-    # stage_5_b
-    branch1x1 = keras.layers.Conv2D(filters=384, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
+    # stage5b
+    branch1x1 = keras.layers.Conv2D(filters=384, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5b_conv1x1')(x)
 
-    branch3x3 = keras.layers.Conv2D(filters=192, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch3x3 = keras.layers.Conv2D(filters=384, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu')(branch3x3)
+    branch3x3 = keras.layers.Conv2D(filters=192, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5b_conv3x3_reduce')(x)
+    branch3x3 = keras.layers.Conv2D(filters=384, kernel_size=(3, 3), strides=(1, 1), padding='same', activation='relu', name='stage5b_conv3x3')(branch3x3)
 
-    branch5x5 = keras.layers.Conv2D(filters=48, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(x)
-    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu')(branch5x5)
+    branch5x5 = keras.layers.Conv2D(filters=48, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5b_conv5x5_reduce')(x)
+    branch5x5 = keras.layers.Conv2D(filters=128, kernel_size=(5, 5), strides=(1, 1), padding='same', activation='relu', name='stage5b_conv5x5')(branch5x5)
 
-    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same')(x)
-    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu')(branch_pool)
+    branch_pool = keras.layers.MaxPool2D(pool_size=(3, 3), strides=(1, 1), padding='same', name='stage5b_pool')(x)
+    branch_pool = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage5b_pool_reduce')(branch_pool)
 
-    x = keras.layers.Concatenate(axis=channel_axis, name='stage_5_b')([branch1x1, branch3x3, branch5x5, branch_pool])
+    x = keras.layers.Concatenate(axis=channel_axis, name='stage5b')([branch1x1, branch3x3, branch5x5, branch_pool])
 
     # classifier
     x = keras.layers.GlobalAveragePooling2D(name='avg_pool')(x)
-    x = keras.layers.Dropout(rate=0.4)(x)
+    x = keras.layers.Dropout(rate=0.4, name='dropout')(x)
     x = keras.layers.Dense(units=classes, activation=classifier_activation, name='predictions')(x)
 
     # Create model.
