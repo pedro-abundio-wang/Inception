@@ -108,6 +108,13 @@ def InceptionV1(
 
     x = keras.layers.Concatenate(axis=channel_axis, name='stage4a')([branch1x1, branch3x3, branch5x5, branch_pool])
 
+    # aux classifier (stage4a)
+    y = keras.layers.AveragePooling2D(pool_size=(5, 5), strides=(3, 3), name='stage4a_aux_pool')(x)
+    y = keras.layers.Conv2D(filter=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_aux_conv')(y)
+    y = keras.layers.Dense(units=1024, activation='relu', name='stage4a_aux_dense')(y)
+    y = keras.layers.Dropout(rate=0.7, name='stage4a_aux_dropout')(y)
+    y = keras.layers.Dense(units=1000, activation=classifier_activation, name='stage4a_aux_classifier')(y)
+
     # stage4b
     branch1x1 = keras.layers.Conv2D(filters=160, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4b_conv1x1')(x)
 
@@ -149,6 +156,13 @@ def InceptionV1(
     branch_pool = keras.layers.Conv2D(filters=64, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_pool_reduce')(branch_pool)
 
     x = keras.layers.Concatenate(axis=channel_axis, name='stage4d')([branch1x1, branch3x3, branch5x5, branch_pool])
+
+    # aux classifier (stage4d)
+    z = keras.layers.AveragePooling2D(pool_size=(5, 5), strides=(3, 3), name='stage4d_aux_pool')(x)
+    z = keras.layers.Conv2D(filter=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_aux_conv')(z)
+    z = keras.layers.Dense(units=1024, activation='relu', name='stage4d_aux_dense')(z)
+    z = keras.layers.Dropout(rate=0.7, name='stage4d_aux_dropout')(z)
+    z = keras.layers.Dense(units=1000, activation=classifier_activation, name='stage4d_aux_classifier')(z)
 
     # stage4e
     branch1x1 = keras.layers.Conv2D(filters=256, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4e_conv1x1')(x)
@@ -202,7 +216,7 @@ def InceptionV1(
 
     # Create model.
     inputs = img_input
-    model = keras.Model(inputs=inputs, outputs=x, name='inception_v1')
+    model = keras.Model(inputs=inputs, outputs=[x, y, z], name='inception_v1')
 
     return model
 
@@ -213,3 +227,41 @@ def preprocess_input(x, data_format=None):
 
 def decode_predictions(preds, top=5):
     return keras.applications.imagenet_utils.decode_predictions(preds, top=top)
+
+
+# compile model
+model = InceptionV1(input_shape=(224, 224, 3))
+
+model.summary()
+
+losses = {
+    'category_output': 'sparse_categorical_crossentropy',
+    'stage4a_aux': 'sparse_categorical_crossentropy',
+    'stage4d_aux': 'sparse_categorical_crossentropy',
+}
+losses_weights = {
+    'category_output': 1.0,
+    'stage4a_aux': 0.3,
+    'stage4d_aux': 0.3,
+}
+
+opt = keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True, name='SGD')
+
+model.compile(optimizer=opt, loss=losses, loss_weights=losses_weights, metrics=['accuracy'])
+
+# train model
+
+trainX = None
+trainY = None
+testX = None
+testY = None
+EPOCHS = None
+
+H = model.fit(x=trainX, y={'category_output': trainY, 'stage4a_aux': trainY, 'stage4d_aux': trainY},
+              validation_data=(testX, {'category_output': trainY, 'stage4a_aux': trainY, 'stage4d_aux': trainY}),
+              epochs=EPOCHS,
+              verbose=1)
+
+# save the model to disk
+# print("[INFO] serializing network...")
+# model.save(args["model"], save_format="h5")
