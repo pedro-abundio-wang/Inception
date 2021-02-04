@@ -18,10 +18,11 @@ Reference:
       https://arxiv.org/abs/1409.4842)
 """
 
+import tensorflow as tf
 from tensorflow import keras
 
 def InceptionV1(
-        input_shape=None,
+        input_shape=(224, 224, 3),
         classes=1000,
         classifier_activation='softmax'):
     """Instantiates the Inception v1 architecture.
@@ -229,39 +230,100 @@ def decode_predictions(preds, top=5):
     return keras.applications.imagenet_utils.decode_predictions(preds, top=top)
 
 
-# compile model
+# create model
 model = InceptionV1(input_shape=(224, 224, 3))
 
 model.summary()
 
-losses = {
-    'category_output': 'sparse_categorical_crossentropy',
-    'stage4a_aux': 'sparse_categorical_crossentropy',
-    'stage4d_aux': 'sparse_categorical_crossentropy',
-}
-losses_weights = {
-    'category_output': 1.0,
-    'stage4a_aux': 0.3,
-    'stage4d_aux': 0.3,
-}
+keras.utils.plot_model(model, "inception_v1.png", show_shapes=True)
 
+# compile model
 opt = keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True, name='SGD')
 
-model.compile(optimizer=opt, loss=losses, loss_weights=losses_weights, metrics=['accuracy'])
+losses = {
+    'predictions': keras.losses.SparseCategoricalCrossentropy(),
+    'stage4a_aux_classifier': keras.losses.SparseCategoricalCrossentropy(),
+    'stage4d_aux_classifier': keras.losses.SparseCategoricalCrossentropy()
+}
 
-# train model
+losses_weights = {
+    'predictions': 1.0,
+    'stage4a_aux_classifier': 0.3,
+    'stage4d_aux_classifier': 0.3
+}
 
-trainX = None
-trainY = None
-testX = None
-testY = None
-EPOCHS = None
+metrics = {
+    'predictions': keras.metrics.SparseCategoricalAccuracy(),
+    'stage4a_aux_classifier': keras.metrics.SparseCategoricalAccuracy(),
+    'stage4d_aux_classifier': keras.metrics.SparseCategoricalAccuracy()
+}
 
-H = model.fit(x=trainX, y={'category_output': trainY, 'stage4a_aux': trainY, 'stage4d_aux': trainY},
-              validation_data=(testX, {'category_output': trainY, 'stage4a_aux': trainY, 'stage4d_aux': trainY}),
-              epochs=EPOCHS,
-              verbose=1)
+model.compile(optimizer=opt, loss=losses, loss_weights=losses_weights, metrics=metrics)
 
-# save the model to disk
-# print("[INFO] serializing network...")
-# model.save(args["model"], save_format="h5")
+# train
+
+train_dataset = tf.data.Dataset.from_tensor_slices(
+    (
+        {"img_input": img_data},
+        {'predictions': class_targets, 'stage4a_aux_classifier': class_targets, 'stage4d_aux_classifier': class_targets},
+    )
+)
+train_dataset = train_dataset.shuffle(buffer_size=1024).batch(64)
+
+val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+val_dataset = val_dataset.batch(64)
+
+# callbacks
+early_stopping = keras.callbacks.EarlyStopping(
+    # Stop training when `val_loss` is no longer improving
+    monitor="val_loss",
+    # "no longer improving" being defined as "no better than 1e-2 less"
+    min_delta=1e-2,
+    # "no longer improving" being further defined as "for at least 2 epochs"
+    patience=2,
+    verbose=1,
+)
+
+checkpoint = keras.callbacks.ModelCheckpoint(
+    # Path where to save the model
+    # The two parameters below mean that we will overwrite
+    # the current checkpoint if and only if
+    # the `val_loss` score has improved.
+    # The saved model name will include the current epoch.
+    filepath="inception_v1_{epoch}",
+    save_best_only=True,  # Only save a model if `val_loss` has improved.
+    monitor="val_loss",
+    verbose=1,
+)
+
+def scheduler(epoch, lr):
+    if epoch < 10:
+        return lr
+    else:
+        return lr * tf.math.exp(-0.1)
+
+learning_rate_schedules = tf.keras.callbacks.LearningRateScheduler(scheduler)
+
+tensor_board = keras.callbacks.TensorBoard(
+    log_dir="tensor_board_logs",
+    histogram_freq=0,  # How often to log histogram visualizations
+    embeddings_freq=0,  # How often to log embedding visualizations
+    update_freq="epoch",
+)  # How often to write logs (default: once per epoch)
+
+callbacks = [
+    early_stopping,
+    checkpoint,
+    learning_rate_schedules,
+    tensor_board
+]
+
+history = model.fit(train_dataset, validation_data=val_dataset, epochs=100, callbacks=callbacks, verbose=1)
+
+# save
+model.save(filepath='./', save_format='tf')
+
+# load model
+
+# inference
+
