@@ -111,7 +111,7 @@ def InceptionV1(
 
     # aux classifier (stage4a)
     y = keras.layers.AveragePooling2D(pool_size=(5, 5), strides=(3, 3), name='stage4a_aux_pool')(x)
-    y = keras.layers.Conv2D(filter=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_aux_conv')(y)
+    y = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4a_aux_conv')(y)
     y = keras.layers.Dense(units=1024, activation='relu', name='stage4a_aux_dense')(y)
     y = keras.layers.Dropout(rate=0.7, name='stage4a_aux_dropout')(y)
     y = keras.layers.Dense(units=1000, activation=classifier_activation, name='stage4a_aux_classifier')(y)
@@ -160,7 +160,7 @@ def InceptionV1(
 
     # aux classifier (stage4d)
     z = keras.layers.AveragePooling2D(pool_size=(5, 5), strides=(3, 3), name='stage4d_aux_pool')(x)
-    z = keras.layers.Conv2D(filter=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_aux_conv')(z)
+    z = keras.layers.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding='same', activation='relu', name='stage4d_aux_conv')(z)
     z = keras.layers.Dense(units=1024, activation='relu', name='stage4d_aux_dense')(z)
     z = keras.layers.Dropout(rate=0.7, name='stage4d_aux_dropout')(z)
     z = keras.layers.Dense(units=1000, activation=classifier_activation, name='stage4d_aux_classifier')(z)

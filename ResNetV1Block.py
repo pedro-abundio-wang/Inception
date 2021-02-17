@@ -2,99 +2,122 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-class IdentityBlock(keras.layers.Layer):
-    def __init__(self, filters, **kwargs):
-        super(IdentityBlock, self).__init(**kwargs)
-        self.filters = filters
-
-    def call(self, inputs):
-        x = inputs
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.Add()([x, inputs])
-        x = keras.layers.ReLU()(x)
-        return x
-
-    def get_config(self):
-        config = super(IdentityBlock, self).get_config()
-        config.update({"filters": self.filters})
-        return config
+def identity_block(x, filters, stage, block):
+    
+    base_name = stage + block
+    
+    # shortcut connection
+    x_shortcut = x
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv1')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn1')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu1')(x)
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv2')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn2')(x)
+    
+    x = keras.layers.Add(name=base_name+'_add')([x, x_shortcut])
+    x = keras.layers.ReLU(name=base_name+'_relu2')(x)
+    
+    return x
 
 
-class DownsamplingIdentityBlock(keras.layers.Layer):
-    def __init__(self, filters, **kwargs):
-        super(DownsamplingIdentityBlock, self).__init__(**kwargs)
-        self.filters = filters
-
-    def call(self, inputs):
-        x = inputs
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(2, 2), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        inputs = keras.layers.Conv2D(filters=self.filters, kernel_size=(1, 1), strides=(2, 2), padding='valid')(inputs)
-        inputs = keras.layers.BatchNormalization(axis=-1)(inputs)
-        x = keras.layers.Add()([x, inputs])
-        x = keras.layers.ReLU()(x)
-        return x
-
-    def get_config(self):
-        config = super(DownsamplingIdentityBlock, self).get_config()
-        config.update({"filters": self.filters})
-        return config
-
-
-class BottleneckIdentityBlock(keras.layers.Layer):
-    def __init__(self, filters, **kwargs):
-        super(BottleneckIdentityBlock, self).__init__(**kwargs)
-        self.filters = filters
-
-    def call(self, inputs):
-        x = inputs
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(1, 1), strides=(1, 1), padding='valid')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=4 * self.filters, kernel_size=(1, 1), strides=(1, 1), padding='valid')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.Add()([x, inputs])
-        x = keras.layers.ReLU()(x)
-        return x
-
-    def get_config(self):
-        config = super(BottleneckIdentityBlock, self).get_config()
-        config.update({"filters": self.filters})
-        return config
+def identity_block_downsampling(x, filters, stage, block):
+    
+    base_name = stage + block
+    
+    # shortcut connection
+    x_shortcut = x
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(2, 2), padding='same', name=base_name+'_conv1')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn1')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu1')(x)
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv2')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn2')(x)
+    
+    x_shortcut = keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(2, 2), padding='valid', name=base_name+'_shortcut_conv')(x_shortcut)
+    x_shortcut = keras.layers.BatchNormalization(axis=-1, name=base_name+'_shortcut_bn')(x_shortcut)
+    
+    x = keras.layers.Add(name=base_name+'_add')([x, x_shortcut])
+    x = keras.layers.ReLU(name=base_name+'_relu2')(x)    
+    
+    return x
 
 
-class DownsamplingBottleneckIdentityBlock(keras.layers.Layer):
-    def __init__(self, filters, **kwargs):
-        super(DownsamplingBottleneckIdentityBlock, self).__init__(**kwargs)
-        self.filters = filters
+def bottleneck_identity_block(x, filters, stage, block):
+    
+    base_name = stage + block
+    
+    # shortcut connection
+    x_shortcut = x
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_conv1')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn1')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu1')(x)
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv2')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn2')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu2')(x)
+    
+    x = keras.layers.Conv2D(filters=4*filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_conv3')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn3')(x)
+    
+    x = keras.layers.Add(name=base_name+'_add')([x, x_shortcut])
+    x = keras.layers.ReLU(name=base_name+'_relu3')(x)
+    
+    return x
 
-    def call(self, inputs):
-        x = inputs
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(1, 1), strides=(2, 2), padding='valid')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        x = keras.layers.ReLU()(x)
-        x = keras.layers.Conv2D(filters=4 * self.filters, kernel_size=(1, 1), strides=(1, 1), padding='valid')(x)
-        x = keras.layers.BatchNormalization(axis=-1)(x)
-        inputs = keras.layers.Conv2D(filters=4 * self.filters, kernel_size=(1, 1), strides=(2, 2), padding='valid')(inputs)
-        inputs = keras.layers.BatchNormalization(axis=-1)(inputs)
-        x = keras.layers.Add()([x, inputs])
-        x = keras.layers.ReLU()(x)
-        return x
 
-    def get_config(self):
-        config = super(DownsamplingBottleneckIdentityBlock, self).get_config()
-        config.update({"filters": self.filters})
-        return config
+def bottleneck_identity_block_conv(x, filters, stage, block):
+    
+    base_name = stage + block
+    
+    # shortcut connection
+    x_shortcut = x
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_conv1')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn1')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu1')(x)
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv2')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn2')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu2')(x)
+    
+    x = keras.layers.Conv2D(filters=4*filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_conv3')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn3')(x)
+    
+    x_shortcut = keras.layers.Conv2D(filters=4*filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_shortcut_conv')(x_shortcut)
+    x_shortcut = keras.layers.BatchNormalization(axis=-1, name=base_name+'_shortcut_bn')(x_shortcut)
+    
+    x = keras.layers.Add(name=base_name+'_add')([x, x_shortcut])
+    x = keras.layers.ReLU(name=base_name+'_relu3')(x)
+    
+    return x
+
+
+def bottleneck_identity_block_downsampling(x, filters, stage, block):
+
+    base_name = stage + block
+    
+    # shortcut connection
+    x_shortcut = x
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(1, 1), strides=(2, 2), padding='valid', name=base_name+'_conv1')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn1')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu1')(x)
+    
+    x = keras.layers.Conv2D(filters=filters, kernel_size=(3, 3), strides=(1, 1), padding='same', name=base_name+'_conv2')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn2')(x)
+    x = keras.layers.ReLU(name=base_name+'_relu2')(x)
+    
+    x = keras.layers.Conv2D(filters=4*filters, kernel_size=(1, 1), strides=(1, 1), padding='valid', name=base_name+'_conv3')(x)
+    x = keras.layers.BatchNormalization(axis=-1, name=base_name+'_bn3')(x)
+
+    x_shortcut = keras.layers.Conv2D(filters=4*filters, kernel_size=(1, 1), strides=(2, 2), padding='valid', name=base_name+'_shortcut_conv')(x_shortcut)
+    x_shortcut = keras.layers.BatchNormalization(axis=-1, name=base_name+'_shortcut_bn')(x_shortcut)
+    
+    x = keras.layers.Add(name=base_name+'_add')([x, x_shortcut])
+    x = keras.layers.ReLU(name=base_name+'_relu3')(x)
+    
+    return x
