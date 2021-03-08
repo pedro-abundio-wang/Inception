@@ -1,4 +1,4 @@
-name: Inception
+name: image-classification
 channels:
   - anaconda
   - defaults
@@ -180,5 +180,10 @@ dependencies:
   - zipp=3.4.0=pyhd3eb1b0_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.5=h9ceee32_0
-prefix: /home/pedro/anaconda3/envs/Inception
+  - pip:
+    - gviz-api==1.9.0
+    - importlib-resources==5.1.0
+    - tensorboard-plugin-profile==2.4.0
+    - tensorflow-datasets==4.1.0
+prefix: /home/pedro/anaconda3/envs/image-classification
 
