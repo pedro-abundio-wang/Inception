@@ -47,10 +47,10 @@ def alexnet(input_shape=(227, 227, 3),
     x = tf.keras.layers.BatchNormalization(axis=-1, name='bn')(x)
     x = tf.keras.layers.Dropout(rate=0.5, name='dropout')(x)
 
-    x = tf.keras.layers.Dense(units=4096, kernel_regularizer=tf.keras.regularizers.l2(0.0005), name='_fc')(x)
-    x = tf.keras.layers.ReLU(name='_relu')(x)
-    x = tf.keras.layers.BatchNormalization(axis=-1, name='_bn')(x)
-    x = tf.keras.layers.Dropout(rate=0.5, name='_dropout')(x)
+    x = tf.keras.layers.Dense(units=4096, kernel_regularizer=tf.keras.regularizers.l2(0.0005), name='fc_')(x)
+    x = tf.keras.layers.ReLU(name='relu_')(x)
+    x = tf.keras.layers.BatchNormalization(axis=-1, name='bn_')(x)
+    x = tf.keras.layers.Dropout(rate=0.5, name='dropout_')(x)
 
     # classifier
     x = tf.keras.layers.Dense(units=classes, activation=classifier_activation,

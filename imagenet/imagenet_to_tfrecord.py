@@ -1,14 +1,22 @@
 r"""Script to process the Imagenet dataset.
-- Training images: /data/image-net/ILSVRC2012_img_train/n03062245/n03062245_4620.JPEG
-- Validation Images: /data/image-net/ILSVRC2012_img_val/ILSVRC2012_val_00000001.JPEG
-- Validation Labels: /data/image-net/imagenet_2012_validation_synset_labels.txt
-- Output train tfrecord: /data/image-net/tfrecord_train/tfrecord_train-00001-of-01024
-- Output val tfrecord: /data/image-net/tfrecord_val/tfrecord_val-00001-of-00128
+
+Imagenet format:
+
+- Training images: /data/imagenet/train/n03062245/n03062245_4620.JPEG
+- Validation Images: /data/imagenet/validation/ILSVRC2012_val_00000001.JPEG
+- Validation Labels: /data/imagenet/synset_labels.txt
+- tfrecord train: /data/imagenet/tfrecord/train/train-00001-of-01024
+- tfrecord validation: /data/imagenet/tfrecord/validation/validation-00001-of-00128
+
 To run the script to preprocess the raw dataset as TFRecords,
 run the following command:
+
 ```
-python3 imagenet_to_tfrecord.py
+python imagenet_to_tfrecord.py \
+  --raw_data_dir="/data/imagenet" \
+  --local_scratch_dir="/data/imagenet/tfrecord"
 ```
+
 """
 
 import math
@@ -16,28 +24,32 @@ import os
 import random
 from typing import Iterable, List, Mapping, Union, Tuple
 from absl import app
+from absl import flags
 from absl import logging
 
 import tensorflow as tf
 
+flags.DEFINE_string(
+    'raw_data_dir', '/data/imagenet', 'Directory path for raw Imagenet dataset.' 
+                                      'Should have train and validation subdirectories inside it.')
+flags.DEFINE_string(
+    'local_scratch_dir', '/data/imagenet/tfrecord', 'Scratch directory path for temporary files.')
+
+FLAGS = flags.FLAGS
+
+LABELS_FILE = 'synset_labels.txt'
+
 TRAINING_SHARDS = 1024
 VALIDATION_SHARDS = 128
 
-IMAGENET_DIRECTORY = '/data/image-net'
-
-TRAINING_DIRECTORY = 'ILSVRC2012_img_train'
-VALIDATION_DIRECTORY = 'ILSVRC2012_img_val'
-VALIDATION_LABELS_FILE = 'imagenet_2012_validation_synset_labels.txt'
-VALIDATION_BLACKLIST_FILE = 'ILSVRC2015_clsloc_validation_blacklist.txt'
-
-TFRECORD_TRAINING_DIRECTORY = 'tfrecord_train'
-TFRECORD_VALIDATION_DIRECTORY = 'tfrecord_val'
+TRAINING_DIRECTORY = 'train'
+VALIDATION_DIRECTORY = 'validation'
 
 
 def _check_or_create_dir(directory: str):
     """Checks if directory exists otherwise creates it."""
-    if not tf.compat.v1.gfile.Exists(directory):
-        tf.compat.v1.gfile.MakeDirs(directory)
+    if not tf.io.gfile.exists(directory):
+        tf.io.gfile.mkdir(directory)
 
 
 def _int64_feature(value: Union[int, Iterable[int]]) -> tf.train.Feature:
@@ -170,7 +182,7 @@ def _process_image(
       width: integer, image width in pixels.
     """
     # Read the image file.
-    with tf.compat.v1.gfile.FastGFile(filename, 'rb') as f:
+    with tf.io.gfile.GFile(filename, 'rb') as f:
         image_data = f.read()
 
     # Clean the dirty data.
@@ -258,7 +270,8 @@ def _process_dataset(
 
 
 def convert_to_tf_records(
-        raw_data_dir: str) -> Tuple[List[str], List[str]]:
+        raw_data_dir: str,
+        local_scratch_dir: str) -> Tuple[List[str], List[str]]:
     """Converts the Imagenet dataset into TF-Record dumps."""
 
     # Shuffle training records to ensure we are distributing classes
@@ -271,7 +284,7 @@ def convert_to_tf_records(
         return order
 
     # Glob all the training files
-    training_files = tf.compat.v1.gfile.Glob(
+    training_files = tf.io.gfile.glob(
         os.path.join(raw_data_dir, TRAINING_DIRECTORY, '*', '*.JPEG'))
 
     # Get training file synset labels from the directory name
@@ -284,68 +297,58 @@ def convert_to_tf_records(
     training_synsets = [training_synsets[i] for i in training_shuffle_idx]
 
     # Glob all the validation files
-    validation_files = sorted(tf.compat.v1.gfile.Glob(
-        os.path.join(raw_data_dir, VALIDATION_DIRECTORY, '*.JPEG')))
+    validation_files = sorted(tf.io.gfile.glob(
+        os.path.join(raw_data_dir, VALIDATION_DIRECTORY, '*', '.JPEG')))
 
     # Get validation file synset labels from labels.txt
-    validation_synsets = tf.compat.v1.gfile.FastGFile(
-        os.path.join(raw_data_dir, VALIDATION_LABELS_FILE), 'rb').read().splitlines()
+    validation_synsets = tf.io.gfile.GFile(
+        os.path.join(raw_data_dir, LABELS_FILE), 'rb').read().splitlines()
 
     # Create unique ids for all synsets
     labels = {v: k + 1 for k, v in enumerate(
         sorted(set(validation_synsets + training_synsets)))}
-    logging.info('WordNet label mapping = %s', labels)
-
-    # Get validation blacklist file
-    validation_blacklist = tf.compat.v1.gfile.FastGFile(
-        os.path.join(raw_data_dir, VALIDATION_BLACKLIST_FILE), 'rb').read().splitlines()
-
-    # validation blacklist
-    validation_files = [validation_file for i, validation_file in enumerate(validation_files)
-                        if bytes(str(i + 1), 'utf-8') not in validation_blacklist]
-
-    # validation blacklist
-    validation_synsets = [validation_synset for i, validation_synset in enumerate(validation_synsets)
-                          if bytes(str(i + 1), 'utf-8') not in validation_blacklist]
 
     # Create training data
     logging.info('Processing the training data.')
     training_records = _process_dataset(
         training_files, training_synsets, labels,
-        os.path.join(raw_data_dir, TFRECORD_TRAINING_DIRECTORY),
-        TFRECORD_TRAINING_DIRECTORY, TRAINING_SHARDS)
+        os.path.join(local_scratch_dir, TRAINING_DIRECTORY),
+        TRAINING_DIRECTORY, TRAINING_SHARDS)
 
     # Create validation data
     logging.info('Processing the validation data.')
     validation_records = _process_dataset(
         validation_files, validation_synsets, labels,
-        os.path.join(raw_data_dir, TFRECORD_VALIDATION_DIRECTORY),
-        TFRECORD_VALIDATION_DIRECTORY, VALIDATION_SHARDS)
+        os.path.join(local_scratch_dir, VALIDATION_DIRECTORY),
+        VALIDATION_DIRECTORY, VALIDATION_SHARDS)
 
     return training_records, validation_records
 
 
-def run(raw_data_dir: str):
-    """Runs the ImageNet preprocessing and uploading to GCS.
+def run(raw_data_dir: str,
+        local_scratch_dir: str):
+    """Runs the ImageNet preprocessing.
     Args:
       raw_data_dir: str, the path to the folder with raw ImageNet data.
+      local_scratch_dir: str, the local directory path.
     """
-
     if raw_data_dir is None:
         raise AssertionError(
             'The ImageNet download path is no longer supported. Please download '
             'and extract the .tar files manually and provide the `raw_data_dir`.')
 
     # Convert the raw data into tf-records
-    convert_to_tf_records(raw_data_dir=raw_data_dir)
+    training_records, validation_records = convert_to_tf_records(
+        raw_data_dir=raw_data_dir,
+        local_scratch_dir=local_scratch_dir)
 
 
 def main(_):
-    run(raw_data_dir=IMAGENET_DIRECTORY)
+    run(raw_data_dir=FLAGS.raw_data_dir,
+        local_scratch_dir=FLAGS.local_scratch_dir)
 
 
 if __name__ == '__main__':
     logging.set_verbosity(logging.INFO)
-    tf.compat.v1.disable_eager_execution()
+    tf.compat.v1.disable_v2_behavior()
     app.run(main)
-

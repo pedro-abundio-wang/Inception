@@ -12,6 +12,7 @@ _NUM_PARALLEL_CALLS = 4
 _DATASET_BUFFER_SIZE = 8 * 1024 * 1024
 _CYCLE_LENGTH = 4
 
+
 def image_mean_subtraction(image, means):
     """Subtracts the given means from each image channel.
     For example:
@@ -81,7 +82,7 @@ def parse_record(record: tf.train.Example) -> Tuple[tf.Tensor, tf.Tensor]:
 
 def build_train_dataset(data_path: str, batch_size: int) -> tf.data.Dataset:
     """Builds a standard ImageNet dataset with only reshaping preprocessing."""
-    file_pattern = os.path.join(data_path, 'tfrecord_train-*')
+    file_pattern = os.path.join(data_path, 'tfrecord_train-0000*-of-01024')
     dataset = tf.data.Dataset.list_files(file_pattern, shuffle=True)
 
     dataset = dataset.interleave(
@@ -105,10 +106,9 @@ def data_augmentation(dataset_train):
     This increases the size of our training set by a factor of 2048"""
 
 
-
 def build_valid_dataset(data_path: str, batch_size: int) -> tf.data.Dataset:
     """Builds a standard ImageNet dataset with only reshaping preprocessing."""
-    file_pattern = os.path.join(data_path, 'tfrecord_val-*')
+    file_pattern = os.path.join(data_path, 'tfrecord_val-0000*-of-00128')
     dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
 
     dataset = dataset.interleave(

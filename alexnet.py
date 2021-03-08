@@ -8,16 +8,17 @@ from alexnet.alexnet_preprocessing import build_train_dataset
 from alexnet.alexnet_preprocessing import build_valid_dataset
 
 
-IMAGENET_DIRECTORY = '/data/image-net'
+IMAGENET_DIRECTORY = '/data/imagenet'
 
-TFRECORD_TRAINING_DIRECTORY = 'tfrecord_train'
-TFRECORD_VALIDATION_DIRECTORY = 'tfrecord_val'
+TFRECORD_TRAINING_DIRECTORY = 'tfrecord/train'
+TFRECORD_VALIDATION_DIRECTORY = 'tfrecord/validation'
 
 BATCH_SIZE = 128
 
 # Dataset constants
 _NUM_TRAIN_IMAGES = 1281167
 _NUM_EVAL_IMAGES = 50000
+
 
 def main(_):
 
@@ -37,7 +38,7 @@ def main(_):
     )
 
     # compile model
-    opt = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True, name='SGD')
+    opt = tf.keras.optimizers.SGD(learning_rate=0.005, momentum=0.9, nesterov=True, name='SGD')
     losses = tf.keras.losses.SparseCategoricalCrossentropy()
     metrics = tf.keras.metrics.SparseCategoricalAccuracy()
     model.compile(optimizer=opt, loss=losses, metrics=metrics)
@@ -51,7 +52,8 @@ def main(_):
 
     # trained the network for roughly 90 cycles through the training set of 1.2 million images
     history = model.fit(dataset_train, validation_data=dataset_val,
-                        epochs=1, callbacks=callbacks, verbose=1)
+                        epochs=10, callbacks=callbacks, verbose=1)
+
 
 if __name__ == '__main__':
     tf.compat.v2.enable_v2_behavior()
