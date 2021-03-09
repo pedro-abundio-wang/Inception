@@ -1,5 +1,7 @@
 import os
+
 from absl import app
+from absl import logging
 
 import tensorflow as tf
 
@@ -19,20 +21,21 @@ BATCH_SIZE = 128
 _NUM_TRAIN_IMAGES = 1281167
 _NUM_EVAL_IMAGES = 50000
 
-
-def main(_):
+def train_and_eval():
+    """Runs the train and eval path using compile/fit."""
+    logging.info('Running train and eval.')
 
     # create model
     model = alexnet()
     model.summary()
 
     # load dataset
-    dataset_train = build_train_dataset(
+    train_dataset = build_train_dataset(
         os.path.join(IMAGENET_DIRECTORY, TFRECORD_TRAINING_DIRECTORY),
         BATCH_SIZE
     )
 
-    dataset_val = build_valid_dataset(
+    validation_dataset = build_valid_dataset(
         os.path.join(IMAGENET_DIRECTORY, TFRECORD_VALIDATION_DIRECTORY),
         BATCH_SIZE
     )
@@ -51,8 +54,16 @@ def main(_):
     ]
 
     # trained the network for roughly 90 cycles through the training set of 1.2 million images
-    history = model.fit(dataset_train, validation_data=dataset_val,
+    history = model.fit(train_dataset, validation_data=validation_dataset,
                         epochs=10, callbacks=callbacks, verbose=1)
+
+
+def run():
+    train_and_eval()
+
+
+def main(_):
+    run()
 
 
 if __name__ == '__main__':
