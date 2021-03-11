@@ -335,7 +335,7 @@ def bottleneck_identity_block(input_tensor,
       kernel_size: default (3, 3), the kernel size of middle conv layer at main path
       filters: list of integers, the filters of 3 conv layer at main path
       stage: integer, current stage label, used for generating layer names
-      block: 'a','b'..., current block label, used for generating layer names
+      block: current block label, used for generating layer names
       use_l2_regularizer: whether to use L2 regularizer on Conv layer.
       batch_norm_decay: Moment of batch norm layers.
       batch_norm_epsilon: Epsilon of batch borm layers.
@@ -423,7 +423,7 @@ def bottleneck_conv_block(input_tensor,
       kernel_size: default (3, 3), the kernel size of middle conv layer at main path
       filters: list of integers, the filters of 3 conv layer at main path
       stage: integer, current stage label, used for generating layer names
-      block: 'a','b'..., current block label, used for generating layer names
+      block: current block label, used for generating layer names
       strides: Strides for the second conv layer in the block.
       use_l2_regularizer: whether to use L2 regularizer on Conv layer.
       batch_norm_decay: Moment of batch norm layers.
