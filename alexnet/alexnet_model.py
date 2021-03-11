@@ -42,11 +42,11 @@ def alexnet(num_classes,
         padding='valid',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage1_conv')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='stage1_bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='valid')(x)
 
     # stage2
@@ -57,11 +57,11 @@ def alexnet(num_classes,
         padding='same',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage2_conv')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='stage2_bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='valid')(x)
 
     # stage3
@@ -72,11 +72,11 @@ def alexnet(num_classes,
         padding='same',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage3_conv')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='stage3_bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
 
     # stage4
     x = tf.keras.layers.Conv2D(
@@ -86,11 +86,11 @@ def alexnet(num_classes,
         padding='same',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage4_conv')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='stage4_bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
 
     # stage5
     x = tf.keras.layers.Conv2D(
@@ -100,11 +100,11 @@ def alexnet(num_classes,
         padding='same',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage5_conv')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='stage5_bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='valid')(x)
 
     x = tf.keras.layers.Flatten()(x)
@@ -114,22 +114,22 @@ def alexnet(num_classes,
         units=4096,
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='fc')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='bn')(x)
+    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.Dropout(rate=0.5, name='dropout')(x)
 
     x = tf.keras.layers.Dense(
         units=4096,
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='fc_')(x)
-    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.BatchNormalization(
         axis=bn_axis,
         epsilon=batch_norm_epsilon,
         name='bn_')(x)
+    x = tf.keras.layers.Activation('relu')(x)
     x = tf.keras.layers.Dropout(rate=0.5, name='dropout_')(x)
 
     x = tf.keras.layers.Dense(
