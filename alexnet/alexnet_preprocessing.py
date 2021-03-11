@@ -1,3 +1,17 @@
+"""
+ImageNet consists of variable-resolution images, while our system requires a constant input dimensionality.
+
+Therefore, we down-sampled the images to a fixed resolution of 256x256.
+
+Given a rectangular image, we first rescaled the image such that the shorter side was of length 256,
+and then cropped out the central patch from the resulting image.
+
+We did not pre-process the images 256x256 in any other way,
+except for subtracting the mean activity over the training set from each pixel.
+
+So we trained our network on the (centered) raw RGB values of the pixels.
+"""
+
 import os
 from typing import Tuple
 import tensorflow as tf

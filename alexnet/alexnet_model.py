@@ -40,6 +40,7 @@ def alexnet(num_classes,
         kernel_size=(11, 11),
         strides=(4, 4),
         padding='valid',
+        kernel_initializer='he_normal',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage1_conv')(x)
     x = tf.keras.layers.BatchNormalization(
@@ -55,6 +56,7 @@ def alexnet(num_classes,
         kernel_size=(5, 5),
         strides=(1, 1),
         padding='same',
+        kernel_initializer='he_normal',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage2_conv')(x)
     x = tf.keras.layers.BatchNormalization(
@@ -70,6 +72,7 @@ def alexnet(num_classes,
         kernel_size=(3, 3),
         strides=(1, 1),
         padding='same',
+        kernel_initializer='he_normal',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage3_conv')(x)
     x = tf.keras.layers.BatchNormalization(
@@ -84,6 +87,7 @@ def alexnet(num_classes,
         kernel_size=(3, 3),
         strides=(1, 1),
         padding='same',
+        kernel_initializer='he_normal',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage4_conv')(x)
     x = tf.keras.layers.BatchNormalization(
@@ -98,6 +102,7 @@ def alexnet(num_classes,
         kernel_size=(3, 3),
         strides=(1, 1),
         padding='same',
+        kernel_initializer='he_normal',
         kernel_regularizer=l2_regularizer(use_l2_regularizer),
         name='stage5_conv')(x)
     x = tf.keras.layers.BatchNormalization(
